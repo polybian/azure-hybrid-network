@@ -1,0 +1,10 @@
+# Never commit secrets or deploy-time artifacts
+*.key
+*.pem
+*.pfx
+.env
+*.log
+*.bicepparam.json
+deployment-outputs/
+# Local notes / scratch
+notes/
