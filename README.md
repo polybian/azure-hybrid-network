@@ -1,6 +1,6 @@
-# Azure Hybrid Network Lab — Site-to-Site VPN Design
+# Azure Hybrid Network — Site-to-Site VPN Design
 
-A lab-grade hybrid network design: an on-premises lab (homelab or branch-office
+A production-grade hybrid network design: an on-premises network (home infrastructure or branch-office
 router) connected over an IPsec/IKEv2 site-to-site tunnel to an Azure virtual
 network, with a classic three-tier layout — dedicated gateway subnet, an app
 subnet and a data subnet, each protected by an explicit allow-list NSG. The
@@ -17,8 +17,8 @@ discipline of secrets handling, cost awareness, and clean teardown.
                         │                    AZURE                         │
                         │              10.10.0.0/16                        │
                         │                                                  │
-   ON-PREM LAB          │   ┌──────────────────────────────────────────┐   │
-  (your homelab /        │   │  vpngw-hybrid-lab (VpnGw1)               │   │
+   ON-PREM              │   ┌──────────────────────────────────────────┐   │
+  (home network /         │   │  vpngw-hybrid (VpnGw1)                  │   │
    branch router)        │   │  GatewaySubnet  10.10.0.0/27             │   │
   192.168.0.0/16         │   └──────────────────┬───────────────────────┘   │
  ┌──────────────┐        │                      │                           │
@@ -55,32 +55,32 @@ az login
 az account set --subscription "<your-subscription-name>"
 
 # 1. Resource group
-az group create --name rg-hybrid-lab --location eastus
+az group create --name rg-hybrid --location eastus
 
 # 2. Generate a strong pre-shared key (never commit it)
 export PSK=$(openssl rand -base64 32)
 
 # 3. Preview what will change (always what-if before deploy)
 az deployment group what-if \
-  --resource-group rg-hybrid-lab \
+  --resource-group rg-hybrid \
   --template-file bicep/main.bicep \
   --parameters bicep/main.bicepparam \
   --parameters sharedKey="$PSK"
 
 # 4. Deploy (the gateway takes ~30-45 min to provision)
 az deployment group create \
-  --resource-group rg-hybrid-lab \
+  --resource-group rg-hybrid \
   --template-file bicep/main.bicep \
   --parameters bicep/main.bicepparam \
   --parameters sharedKey="$PSK"
 
 # 5. Verify the tunnel
 az network vpn-connection show \
-  --name conn-onprem-lab --resource-group rg-hybrid-lab \
+  --name conn-onprem --resource-group rg-hybrid \
   --query "{status:connectionStatus, protocol:connectionProtocol}" -o table
 
 # 6. When you're done — TEARDOWN (the gateway bills by the hour)
-az group delete --name rg-hybrid-lab --yes --no-wait
+az group delete --name rg-hybrid --yes --no-wait
 ```
 
 ## Security notes
@@ -108,11 +108,11 @@ az group delete --name rg-hybrid-lab --yes --no-wait
   remain on the `connections` resource: a known type-definition
   inaccuracy for its gateway sub-references (id-only is the standard
   shape for this resource); they do not block deployment.
-- **NOT deployed:** this lab was designed and compiled in a sandbox with
+- **NOT deployed:** this design was created and compiled in a sandbox with
   no Azure CLI, no subscription, and no credentials, so the actual
   deployment was **not** tested. The steps in
   `docs/deployment-runbook.md` are for the user's own Azure subscription.
 - To fully validate on your own subscription: deploy (runbook step 5),
   confirm `connectionStatus == Connected` (step 7), pass traffic from
   on-prem to `10.10.1.x`, and watch the tunnel counters move. Then tear it
-  down — `az group delete --name rg-hybrid-lab`.
+  down — `az group delete --name rg-hybrid`.

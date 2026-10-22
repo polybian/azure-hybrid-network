@@ -1,4 +1,4 @@
-# Cost Notes — Azure Hybrid Network Lab
+# Cost Notes — Azure Hybrid Network
 
 > ⚠️ **All prices below are ESTIMATES**, based on published Azure list
 > pricing (US regions, pay-as-you-go) as of late 2025. Azure changes prices;
@@ -19,16 +19,16 @@
 
 **Data transfer (egress):** traffic leaving Azure to the internet/on-prem is
 metered — ESTIMATE ~$0.087/GB for the first 10 TB/mo in North America.
-Inbound traffic is free. Lab pings and RDP sessions barely register; don't
+Inbound traffic is free. Test pings and RDP sessions barely register; don't
 run bulk transfers through the tunnel for fun.
 
 ## Why this SKU stack
 
 VpnGw1 is the cheapest gateway that is fully featured (zone-redundant,
 IKEv2, BGP-capable). Stepping up to VpnGw2 roughly doubles the hourly cost
-for throughput a lab will never use; stepping down to Basic loses IKEv2 and
+for throughput this design will never use; stepping down to Basic loses IKEv2 and
 BGP. The optional VM is commented out in the template for the same reason
-this whole lab is designed around one principle: **nothing should bill
+this whole design is built around one principle: **nothing should bill
 while you're not looking at it.**
 
 ## Teardown reminder
@@ -36,9 +36,9 @@ while you're not looking at it.**
 **Delete the resource group when you're done:**
 
 ```bash
-az group delete --name rg-hybrid-lab --yes --no-wait
+az group delete --name rg-hybrid --yes --no-wait
 ```
 
 A VpnGw1 left running for a forgotten month costs ~$140. Set a calendar
-reminder for the day after your lab session if you think you'll forget. The
+reminder for the day after your test session if you think you'll forget. The
 gateway takes 30–45 minutes to *create* — it takes one command to delete.

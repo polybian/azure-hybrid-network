@@ -1,7 +1,7 @@
 // ============================================================
-// Azure Hybrid Network Lab — site-to-site VPN design (LAB ONLY)
+// Azure Hybrid Network — site-to-site VPN design (TEST ONLY)
 // ============================================================
-// LAB DESIGN. Nothing here touches a real subscription, a real
+// TEST DESIGN. Nothing here touches a real subscription, a real
 // on-premises network, or a real public IP. All on-prem values
 // are TEST-NET-3 (RFC 5737) placeholders you replace with your own.
 
@@ -20,11 +20,11 @@ param onPremAddressSpace array = [
 @secure()
 param sharedKey string
 
-var vnetName = 'vnet-hybrid-lab'
-var gwPublicIpName = 'pip-vpngw-hybrid-lab'
-var gwName = 'vpngw-hybrid-lab'
-var lngName = 'lng-onprem-lab'
-var connName = 'conn-onprem-lab'
+var vnetName = 'vnet-hybrid'
+var gwPublicIpName = 'pip-vpngw-hybrid'
+var gwName = 'vpngw-hybrid'
+var lngName = 'lng-onprem'
+var connName = 'conn-onprem'
 
 // ------------------------------------------------------------
 // NSGs — default-deny posture, explicit allow-list on top.
@@ -169,7 +169,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 
 // ------------------------------------------------------------
 // VPN Gateway: VpnGw1, route-based, IKEv2.
-// VpnGw1 = the lab sweet spot: ~1 Gbps aggregate, up to 30
+// VpnGw1 = the budget sweet spot: ~1 Gbps aggregate, up to 30
 // tunnels, BGP capable — without the VpnGw2+ price jump.
 // (Full "why" in docs/architecture.md.)
 // ------------------------------------------------------------
@@ -258,7 +258,7 @@ resource vpnConnection 'Microsoft.Network/connections@2021-05-01' = {
 // ------------------------------------------------------------
 /*
 resource testVmNic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
-  name: 'nic-testvm-lab'
+  name: 'nic-testvm'
   location: location
   properties: {
     ipConfigurations: [
@@ -276,14 +276,14 @@ resource testVmNic 'Microsoft.Network/networkInterfaces@2021-05-01' = {
 }
 
 resource testVm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
-  name: 'vm-test-lab'
+  name: 'vm-test'
   location: location
   properties: {
     hardwareProfile: {
       vmSize: 'Standard_B2s'
     }
     osProfile: {
-      computerName: 'vm-test-lab'
+      computerName: 'vm-test'
       adminUsername: 'azureuser'
       // Use SSH keys, not passwords, when you enable this.
       adminPassword: 'REPLACE-WITH-SECURE-VALUE'

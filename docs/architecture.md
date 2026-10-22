@@ -26,16 +26,16 @@
 
 The gateway is the single most expensive line item, so the SKU choice matters:
 - **VpnGw1** (~1 Gbps aggregate, up to 30 S2S tunnels, BGP-capable, zone
-  redundancy in supported regions) is the lab sweet spot. It's the smallest
+  redundancy in supported regions) is the budget sweet spot. It's the smallest
   SKU that is still fully featured — zone-redundant, IKEv2, custom IPsec
-  policies — without paying the VpnGw2+ premium for throughput a lab will
+  policies — without paying the VpnGw2+ premium for throughput this design will
   never use.
 - **Why not Basic?** The Basic SKU is cheaper but caps out at 100 Mbps,
   supports only IKEv1 for S2S, and can't do BGP or active-active. For a
   portfolio piece demonstrating current best practice, that's the wrong
   message.
 - **Why not VpnGw2/3/4/5?** Each step roughly doubles the hourly cost for
-  1.25–10 Gbps throughput. A lab tunnel carrying test pings and RDP doesn't
+  1.25–10 Gbps throughput. A tunnel carrying test pings and RDP doesn't
   need it; if the workload grows, the SKU is upgradeable in place (with a
   brief gateway resize window).
 
@@ -93,14 +93,14 @@ VM hostnames within the VNet. For a real hybrid deployment you'd add a
 `corp.internal` zone) linked to the VNet, with conditional forwarders on the
 on-prem DNS pointing Azure-bound queries at a DNS forwarder in `snet-app`
 (or Azure DNS Private Resolver). This design documents the pattern but
-doesn't deploy it — DNS infrastructure is a second lab, not a footnote.
+doesn't deploy it — DNS infrastructure is a second project, not a footnote.
 
 ## Why X over Y: VPN Gateway vs ExpressRoute vs Virtual WAN
 
 | Option | When it wins | Why not here |
 |---|---|---|
-| **VPN Gateway (S2S)** | Lab, small branch, cloud-first org, budget-sensitive | — (this is the pick) |
-| **ExpressRoute** | Predictable latency/throughput, compliance needs, heavy data transfer | Private circuit, $300+/mo port + provider fees, weeks to provision — the opposite of a lab |
+| **VPN Gateway (S2S)** | Test environments, small branch, cloud-first org, budget-sensitive | — (this is the pick) |
+| **ExpressRoute** | Predictable latency/throughput, compliance needs, heavy data transfer | Private circuit, $300+/mo port + provider fees, weeks to provision — the opposite of a lightweight setup |
 | **Virtual WAN** | Many branches, global footprint, SD-WAN integration | Management-plane overhead for one tunnel; the hub alone costs more than VpnGw1 |
 
 The honest framing: VPN Gateway is the right *first* hybrid link. If the org

@@ -1,9 +1,9 @@
-# Deployment Runbook — Azure Hybrid Network Lab
+# Deployment Runbook — Azure Hybrid Network
 
-> **LAB.** This runbook assumes an Azure subscription of your own. None of
+> **NOTE.** This runbook assumes an Azure subscription of your own. None of
 > this was executed from the sandbox where the template was written. On-prem
 > values (`203.0.113.10`, `192.168.0.0/16`) are placeholders — replace them
-> with your real lab router's public IP and LAN range.
+> with your real on-prem router's public IP and LAN range.
 
 ## Prerequisites
 
@@ -11,7 +11,7 @@
 - An Azure subscription you control
 - Bicep CLI: `az bicep install` (one-time; the `az deployment` commands
   below compile Bicep transparently once it's installed)
-- Your on-prem VPN device (lab router, pfSense/OPNsense box, or a Linux box
+- Your on-prem VPN device (on-prem router, pfSense/OPNsense box, or a Linux box
   running strongSwan) reachable from the internet with UDP 500/4500 open
 
 ## Step 1 — Sign in and select the subscription
@@ -25,7 +25,7 @@ az account set --subscription "<your-subscription-name>"
 ## Step 2 — Create the resource group
 
 ```bash
-az group create --name rg-hybrid-lab --location eastus
+az group create --name rg-hybrid --location eastus
 ```
 
 Keep everything in this one resource group. That's what makes teardown a
@@ -35,8 +35,8 @@ single command later.
 
 ```bash
 export PSK=$(openssl rand -base64 32)
-echo "$PSK" > /tmp/hybrid-lab-psk.txt   # delete this file after the deploy
-chmod 600 /tmp/hybrid-lab-psk.txt
+echo "$PSK" > /tmp/hybrid-psk.txt   # delete this file after the deploy
+chmod 600 /tmp/hybrid-psk.txt
 ```
 
 **Better (production pattern):** store it in Key Vault instead of a file.
@@ -44,9 +44,9 @@ chmod 600 /tmp/hybrid-lab-psk.txt
 Key Vault reference in the parameters file at deploy time:
 
 ```bash
-az keyvault create --name kv-hybrid-lab --resource-group rg-hybrid-lab --location eastus \
+az keyvault create --name kv-hybrid --resource-group rg-hybrid --location eastus \
   --enabled-for-template-deployment true
-az keyvault secret set --vault-name kv-hybrid-lab --name vpn-psk --value "$PSK"
+az keyvault secret set --vault-name kv-hybrid --name vpn-psk --value "$PSK"
 ```
 
 Then put your real subscription ID into `bicep/main.bicepparam` (it ships
@@ -56,7 +56,7 @@ with an all-zeros placeholder) so `sharedKey` resolves from the vault:
 az account show --query id -o tsv   # paste this into main.bicepparam
 ```
 
-(If you'd rather skip the vault for a quick lab run, the deploy commands
+(If you'd rather skip the vault for a quick test run, the deploy commands
 below pass `--parameters sharedKey="$PSK"` instead — the CLI value overrides
 the parameters file.)
 
@@ -64,7 +64,7 @@ the parameters file.)
 
 ```bash
 az deployment group what-if \
-  --resource-group rg-hybrid-lab \
+  --resource-group rg-hybrid \
   --template-file bicep/main.bicep \
   --parameters bicep/main.bicepparam \
   --parameters onPremPublicIp="<YOUR-REAL-ONPREM-PUBLIC-IP>" \
@@ -79,7 +79,7 @@ Review the change list: 1 VNet, 3 subnets, 2 NSGs, 1 public IP, 1 gateway,
 
 ```bash
 az deployment group create \
-  --resource-group rg-hybrid-lab \
+  --resource-group rg-hybrid \
   --template-file bicep/main.bicep \
   --parameters bicep/main.bicepparam \
   --parameters onPremPublicIp="<YOUR-REAL-ONPREM-PUBLIC-IP>" \
@@ -93,7 +93,7 @@ wait. Go get coffee.
 
 ## Step 6 — Configure the on-prem side
 
-On your lab router / strongSwan box, create the matching IPsec tunnel:
+On your on-prem router / strongSwan box, create the matching IPsec tunnel:
 
 - Remote peer: the gateway's public IP
   (from deploy outputs: `az deployment group show ... --query properties.outputs`)
@@ -106,12 +106,12 @@ On your lab router / strongSwan box, create the matching IPsec tunnel:
 ```bash
 # Connection status — you want "Connected"
 az network vpn-connection show \
-  --name conn-onprem-lab --resource-group rg-hybrid-lab \
+  --name conn-onprem --resource-group rg-hybrid \
   --query "{status:connectionStatus, protocol:connectionProtocol}" -o table
 
 # What the gateway learned from on-prem (static here, via the LNG)
 az network vnet-gateway list-learned-routes \
-  --name vpngw-hybrid-lab --resource-group rg-hybrid-lab -o table
+  --name vpngw-hybrid --resource-group rg-hybrid -o table
 
 # End-to-end: from on-prem, ping an address in snet-app (e.g. 10.10.1.4
 # once you enable the optional test VM), or RDP through the tunnel.
@@ -123,20 +123,20 @@ answer in `docs/interview-answers.md` (IKE logs, PSK match, prefix match).
 ## Step 8 — Teardown (do not skip)
 
 The gateway bills by the hour **whether the tunnel is up or not**. When the
-lab session is over:
+test session is over:
 
 ```bash
-az group delete --name rg-hybrid-lab --yes --no-wait
+az group delete --name rg-hybrid --yes --no-wait
 ```
 
 Verify it's gone:
 
 ```bash
-az group show --name rg-hybrid-lab  # should error: not found
+az group show --name rg-hybrid  # should error: not found
 ```
 
 Deleting the whole resource group also removes the Key Vault (if you created
-one inside it) — which is what you want for a lab.
+one inside it) — which is what you want for a test environment.
 
 ## Re-deploying later
 
