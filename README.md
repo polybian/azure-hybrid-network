@@ -110,7 +110,7 @@ az group delete --name rg-hybrid --yes --no-wait
 - **NOT deployed:** this design was created and compiled locally with
   no Azure CLI, no subscription, and no credentials, so the actual
   deployment was **not** tested. The steps in
-  `docs/deployment-runbook.md` are for the user's own Azure subscription.
+  `docs/deployment-runbook.md` are for your own Azure subscription.
 - To fully validate on your own subscription: deploy (runbook step 5),
   confirm `connectionStatus == Connected` (step 7), pass traffic from
   on-prem to `10.10.1.x`, and watch the tunnel counters move. Then tear it
