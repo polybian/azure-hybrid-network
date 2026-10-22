@@ -10,7 +10,7 @@
 
 | Resource | SKU | Estimate | Notes |
 |---|---|---|---|
-| VPN Gateway | VpnGw1 | ~$140/mo (~$0.19/hr) | The big one. Billed hourly from the moment the gateway exists — **tunnel up or not**. |
+| VPN Gateway | VpnGw1AZ | ~$140/mo (~$0.19/hr) | The big one. Billed hourly from the moment the gateway exists — **tunnel up or not**. |
 | Gateway public IP | Standard, static | ~$3.65/mo (~$0.005/hr) | Required for the VPN Gateway. |
 | Local Network Gateway | — | $0 | Free. It's just a config object. |
 | Site-to-site connection | — | $0 | Free. You pay for the gateway, not the tunnel. |
@@ -24,7 +24,7 @@ run bulk transfers through the tunnel for fun.
 
 ## Why this SKU stack
 
-VpnGw1 is the cheapest gateway that is fully featured (zone-redundant,
+VpnGw1AZ is the cheapest gateway that is fully featured (zone-redundant,
 IKEv2, BGP-capable). Stepping up to VpnGw2 roughly doubles the hourly cost
 for throughput this design will never use; stepping down to Basic loses IKEv2 and
 BGP. The optional VM is commented out in the template for the same reason
@@ -39,6 +39,6 @@ while you're not looking at it.**
 az group delete --name rg-hybrid --yes --no-wait
 ```
 
-A VpnGw1 left running for a forgotten month costs ~$140. Set a calendar
+A VpnGw1AZ left running for a forgotten month costs ~$140. Set a calendar
 reminder for the day after your test session if you think you'll forget. The
 gateway takes 30–45 minutes to *create* — it takes one command to delete.

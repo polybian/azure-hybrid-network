@@ -18,7 +18,7 @@ discipline of secrets handling, cost awareness, and clean teardown.
                         │              10.10.0.0/16                        │
                         │                                                  │
    ON-PREM              │   ┌──────────────────────────────────────────┐   │
-  (home network /         │   │  vpngw-hybrid (VpnGw1)                  │   │
+  (home network /         │   │  vpngw-hybrid (VpnGw1AZ)               │   │
    branch router)        │   │  GatewaySubnet  10.10.0.0/27             │   │
   192.168.0.0/16         │   └──────────────────┬───────────────────────┘   │
  ┌──────────────┐        │                      │                           │
@@ -107,7 +107,7 @@ az group delete --name rg-hybrid --yes --no-wait
   remain on the `connections` resource: a known type-definition
   inaccuracy for its gateway sub-references (id-only is the standard
   shape for this resource); they do not block deployment.
-- **NOT deployed:** this design was created and compiled in a sandbox with
+- **NOT deployed:** this design was created and compiled locally with
   no Azure CLI, no subscription, and no credentials, so the actual
   deployment was **not** tested. The steps in
   `docs/deployment-runbook.md` are for the user's own Azure subscription.

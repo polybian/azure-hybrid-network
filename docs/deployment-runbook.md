@@ -1,7 +1,7 @@
 # Deployment Runbook — Azure Hybrid Network
 
 > **NOTE.** This runbook assumes an Azure subscription of your own. None of
-> this was executed from the sandbox where the template was written. On-prem
+> this was executed from the machine where the template was written. On-prem
 > values (`203.0.113.10`, `192.168.0.0/16`) are placeholders — replace them
 > with your real on-prem router's public IP and LAN range.
 
@@ -69,7 +69,8 @@ az deployment group what-if \
   --parameters bicep/main.bicepparam \
   --parameters onPremPublicIp="<YOUR-REAL-ONPREM-PUBLIC-IP>" \
   --parameters onPremAddressSpace='["<YOUR-REAL-ONPREM-LAN>"]' \
-  --parameters sharedKey="$PSK"
+  --parameters sharedKey="$PSK" \
+  --parameters vmSshPublicKey="$(cat ~/.ssh/id_rsa.pub)"
 ```
 
 Review the change list: 1 VNet, 3 subnets, 2 NSGs, 1 public IP, 1 gateway,
@@ -84,7 +85,8 @@ az deployment group create \
   --parameters bicep/main.bicepparam \
   --parameters onPremPublicIp="<YOUR-REAL-ONPREM-PUBLIC-IP>" \
   --parameters onPremAddressSpace='["<YOUR-REAL-ONPREM-LAN>"]' \
-  --parameters sharedKey="$PSK"
+  --parameters sharedKey="$PSK" \
+  --parameters vmSshPublicKey="$(cat ~/.ssh/id_rsa.pub)"
 ```
 
 **The VPN Gateway takes ~30–45 minutes to provision.** This is normal — Azure

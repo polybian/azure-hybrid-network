@@ -20,6 +20,9 @@ param onPremAddressSpace array = [
 @secure()
 param sharedKey string
 
+@description('SSH public key for the test VM (the .pub file contents). Generate with ssh-keygen; never commit key material. Password auth is disabled on the VM.')
+param vmSshPublicKey string
+
 var vnetName = 'vnet-hybrid'
 var gwPublicIpName = 'pip-vpngw-hybrid'
 var gwName = 'vpngw-hybrid'
@@ -168,9 +171,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 }
 
 // ------------------------------------------------------------
-// VPN Gateway: VpnGw1, route-based, IKEv2.
-// VpnGw1 = the budget sweet spot: ~1 Gbps aggregate, up to 30
-// tunnels, BGP capable — without the VpnGw2+ price jump.
+// VPN Gateway: VpnGw1AZ, route-based, IKEv2, zone-redundant.
+// VpnGw1AZ = the budget sweet spot (~1 Gbps aggregate, up to 30
+// tunnels, BGP capable) — without the VpnGw2+ price jump.
+// NOTE: Microsoft stopped allowing creation of non-AZ VpnGw1-5 SKUs;
+// VpnGw1AZ is the current minimum. The gateway public IP is
+// zone-redundant (zones 1,2,3) as the AZ SKU requires.
 // (Full "why" in docs/architecture.md.)
 // ------------------------------------------------------------
 resource gwPublicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
@@ -178,7 +184,13 @@ resource gwPublicIp 'Microsoft.Network/publicIPAddresses@2021-05-01' = {
   location: location
   sku: {
     name: 'Standard'
+    tier: 'Regional'
   }
+  zones: [
+    '1'
+    '2'
+    '3'
+  ]
   properties: {
     publicIPAllocationMethod: 'Static'
   }
@@ -203,8 +215,8 @@ resource vpnGateway 'Microsoft.Network/virtualNetworkGateways@2021-05-01' = {
       }
     ]
     sku: {
-      name: 'VpnGw1'
-      tier: 'VpnGw1'
+      name: 'VpnGw1AZ'
+      tier: 'VpnGw1AZ'
     }
     gatewayType: 'Vpn'
     vpnType: 'RouteBased'
@@ -285,8 +297,18 @@ resource testVm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     osProfile: {
       computerName: 'vm-test'
       adminUsername: 'azureuser'
-      // Use SSH keys, not passwords, when you enable this.
-      adminPassword: 'REPLACE-WITH-SECURE-VALUE'
+      // SSH key only — password auth disabled (matches the terraform repo).
+      linuxConfiguration: {
+        disablePasswordAuthentication: true
+        ssh: {
+          publicKeys: [
+            {
+              path: '/home/azureuser/.ssh/authorized_keys'
+              keyData: vmSshPublicKey
+            }
+          ]
+        }
+      }
     }
     storageProfile: {
       imageReference: {

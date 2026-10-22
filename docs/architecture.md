@@ -22,14 +22,15 @@
 
 ## Design decisions
 
-### VPN Gateway SKU: VpnGw1 — and why
+### VPN Gateway SKU: VpnGw1AZ — and why
 
 The gateway is the single most expensive line item, so the SKU choice matters:
-- **VpnGw1** (~1 Gbps aggregate, up to 30 S2S tunnels, BGP-capable, zone
-  redundancy in supported regions) is the budget sweet spot. It's the smallest
-  SKU that is still fully featured — zone-redundant, IKEv2, custom IPsec
-  policies — without paying the VpnGw2+ premium for throughput this design will
-  never use.
+- **VpnGw1AZ** (~1 Gbps aggregate, up to 30 S2S tunnels, BGP-capable, zone
+  redundant) is the budget sweet spot. It's the smallest SKU that is still
+  fully featured — zone-redundant, IKEv2, custom IPsec policies — without
+  paying the VpnGw2+ premium for throughput this design will never use.
+  (Microsoft no longer allows creating the non-AZ VpnGw1–5 SKUs, so the AZ
+  variant is the current minimum.)
 - **Why not Basic?** The Basic SKU is cheaper but caps out at 100 Mbps,
   supports only IKEv1 for S2S, and can't do BGP or active-active. For a
   portfolio piece demonstrating current best practice, that's the wrong
@@ -58,7 +59,7 @@ Network Gateway definition. Reasoning:
 
 BGP would be the right call with: multiple on-prem sites, redundant tunnels
 (active-active gateway), or dynamic branch prefixes. The gateway SKU chosen
-(VpnGw1) already supports BGP, so enabling it later is a config change, not a
+(VpnGw1AZ) already supports BGP, so enabling it later is a config change, not a
 rebuild — that's a deliberate part of the design.
 
 ### Subnet sizing
@@ -77,7 +78,7 @@ rebuild — that's a deliberate part of the design.
   `DenyAllInBound` (priority 65500) already drops stray traffic, but this
   design adds an explicit `DenyAllInbound` at priority 4096. Why: it's
   visible in review, it shows up in flow-log analysis without ambiguity, and
-  in an interview you can point at it and explain your intent.
+  it documents intent right where the rule lives.
 - **Allow-lists are minimal and directional:** on-prem may reach the app tier
   only on 443 (app traffic) and 3389 (management *through the tunnel* — never
   from the internet). The data tier accepts only 1433 from the app subnet.
