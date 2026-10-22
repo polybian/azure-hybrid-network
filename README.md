@@ -42,7 +42,6 @@ discipline of secrets handling, cost awareness, and clean teardown.
 | `bicep/main.bicep` | The whole network as code: VNet + subnets, NSGs, VPN Gateway, Local Network Gateway, IPsec connection (test VM commented out) |
 | `bicep/main.bicepparam` | Parameters file with placeholders (no secrets — the shared key is passed at deploy time) |
 | `docs/architecture.md` | Design decisions, "why X over Y", and hardening notes |
-| `docs/interview-answers.md` | "How did you build this?" — talking points for interviews |
 | `docs/deployment-runbook.md` | Step-by-step deploy, tunnel verification, and teardown commands |
 | `docs/cost-notes.md` | SKU price ranges (clearly labeled ESTIMATES) + teardown reminder |
 | `.gitignore` | Keeps keys, secrets, and deploy-time artifacts out of git |
