@@ -117,8 +117,7 @@ az network vnet-gateway list-learned-routes \
 # once you enable the optional test VM), or RDP through the tunnel.
 ```
 
-If status sticks at `Connecting`/`NotConnected`, see the troubleshooting
-answer in `docs/interview-answers.md` (IKE logs, PSK match, prefix match).
+If status sticks at `Connecting`/`NotConnected`, see the troubleshooting notes below (IKE logs, PSK match, prefix match).
 
 ## Step 8 — Teardown (do not skip)
 
