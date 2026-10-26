@@ -3,15 +3,15 @@
 ## Topology
 
 - **Azure side:** one VNet `10.10.0.0/16` with three subnets:
-  - `GatewaySubnet` — `10.10.0.0/27`. The name is mandatory (Azure reserves
+  - `GatewaySubnet`: `10.10.0.0/27`. The name is mandatory (Azure reserves
     it for the gateway). `/27` is the recommended minimum: it leaves enough
     addresses for high-availability/active-active gateway configs later
     without resizing the subnet.
-  - `snet-app` — `10.10.1.0/24` (app tier, ~251 usable addresses).
-  - `snet-data` — `10.10.2.0/24` (data tier, ~251 usable addresses).
+  - `snet-app`: `10.10.1.0/24` (app tier, ~251 usable addresses).
+  - `snet-data`: `10.10.2.0/24` (data tier, ~251 usable addresses).
   - A /24 per workload tier is deliberately roomy: it absorbs growth without
     renumbering and keeps the address plan human-readable.
-- **On-prem side:** represented by a Local Network Gateway — the on-prem VPN
+- **On-prem side:** represented by a Local Network Gateway, the on-prem VPN
   device's public IP (`203.0.113.10`, a TEST-NET-3 placeholder) plus its LAN
   range (`192.168.0.0/16`, placeholder). Azure pushes these prefixes into the
   gateway's effective routes.
@@ -22,12 +22,12 @@
 
 ## Design decisions
 
-### VPN Gateway SKU: VpnGw1AZ — and why
+### VPN Gateway SKU: VpnGw1AZ, and why
 
 The gateway is the single most expensive line item, so the SKU choice matters:
 - **VpnGw1AZ** (~1 Gbps aggregate, up to 30 S2S tunnels, BGP-capable, zone
   redundant) is the budget sweet spot. It's the smallest SKU that is still
-  fully featured — zone-redundant, IKEv2, custom IPsec policies — without
+  fully featured (zone-redundant, IKEv2, custom IPsec policies) without
   paying the VpnGw2+ premium for throughput this design will never use.
   (Microsoft no longer allows creating the non-AZ VpnGw1–5 SKUs, so the AZ
   variant is the current minimum.)
@@ -45,28 +45,28 @@ The gateway is the single most expensive line item, so the SKU choice matters:
 Route-based (as opposed to policy-based) gateways route on IP prefixes rather
 than per-tunnel traffic selectors. That means: multiple tunnels, overlapping
 use of BGP later, and simpler troubleshooting (`get effective routes` shows
-the actual programmed prefixes). IKEv2 is the current standard — faster
+the actual programmed prefixes). IKEv2 is the current standard: faster
 rekeying and better NAT-traversal behavior than IKEv1.
 
 ### BGP vs static routes: static here, BGP documented
 
-This design uses **static routes** — the on-prem prefixes live in the Local
+This design uses **static routes**: the on-prem prefixes live in the Local
 Network Gateway definition. Reasoning:
 - One tunnel, one on-prem site, stable prefixes: static is simpler to read,
   simpler to debug, and has no BGP session to flap.
-- The failure mode is honest: if the on-prem LAN renumbers, you update the
+- The failure mode is simple: if the on-prem LAN renumbers, you update the
   LNG (one parameter) instead of debugging a BGP peering.
 
 BGP would be the right call with: multiple on-prem sites, redundant tunnels
 (active-active gateway), or dynamic branch prefixes. The gateway SKU chosen
 (VpnGw1AZ) already supports BGP, so enabling it later is a config change, not a
-rebuild — that's a deliberate part of the design.
+rebuild: that's a deliberate part of the design.
 
 ### Subnet sizing
 
 - `GatewaySubnet /27`: Azure requires a gateway subnet and recommends /27 or
   larger. Going smaller (/28, /29) blocks future active-active or
-  ExpressRoute-gateway coexistence. It's cheap address space — spend it.
+  ExpressRoute-gateway coexistence. It's cheap address space: spend it.
 - `/24` workload subnets: standard tier-per-subnet layout. The address plan
   leaves `10.10.3.0/24`+ free for future tiers (e.g. `snet-mgmt` for a jump
   host, `snet-private-endpoints` for Private Link) without overlapping the
@@ -80,7 +80,7 @@ rebuild — that's a deliberate part of the design.
   visible in review, it shows up in flow-log analysis without ambiguity, and
   it documents intent right where the rule lives.
 - **Allow-lists are minimal and directional:** on-prem may reach the app tier
-  only on 443 (app traffic) and 3389 (management *through the tunnel* — never
+  only on 443 (app traffic) and 3389 (management *through the tunnel*, never
   from the internet). The data tier accepts only 1433 from the app subnet.
   Nothing else crosses subnet boundaries.
 - **Priorities are spaced (100, 110, …, 4096):** room to insert rules later
@@ -94,19 +94,19 @@ VM hostnames within the VNet. For a real hybrid deployment you'd add a
 `corp.internal` zone) linked to the VNet, with conditional forwarders on the
 on-prem DNS pointing Azure-bound queries at a DNS forwarder in `snet-app`
 (or Azure DNS Private Resolver). This design documents the pattern but
-doesn't deploy it — DNS infrastructure is a second project, not a footnote.
+doesn't deploy it: DNS infrastructure is a second project, not a footnote.
 
 ## Why X over Y: VPN Gateway vs ExpressRoute vs Virtual WAN
 
 | Option | When it wins | Why not here |
 |---|---|---|
-| **VPN Gateway (S2S)** | Test environments, small branch, cloud-first org, budget-sensitive | — (this is the pick) |
-| **ExpressRoute** | Predictable latency/throughput, compliance needs, heavy data transfer | Private circuit, $300+/mo port + provider fees, weeks to provision — the opposite of a lightweight setup |
+| **VPN Gateway (S2S)** | Test environments, small branch, cloud-first org, budget-sensitive |: (this is the pick) |
+| **ExpressRoute** | Predictable latency/throughput, compliance needs, heavy data transfer | Private circuit, $300+/mo port + provider fees, weeks to provision: the opposite of a lightweight setup |
 | **Virtual WAN** | Many branches, global footprint, SD-WAN integration | Management-plane overhead for one tunnel; the hub alone costs more than VpnGw1 |
 
-The honest framing: VPN Gateway is the right *first* hybrid link. If the org
+In short: VPN Gateway is the right *first* hybrid link. If the org
 outgrows it (dozens of sites, SLA-backed latency), ExpressRoute or vWAN is a
-migration, not a regret — the VNet/NSG/subnet design survives unchanged.
+migration, not a regret: the VNet/NSG/subnet design survives unchanged.
 
 ## Hardening notes
 
@@ -117,12 +117,12 @@ migration, not a regret — the VNet/NSG/subnet design survives unchanged.
   schedule; the template's `@secure()` parameter guarantees the key never
   lands in the template, the parameters file, or deployment logs in plaintext.
 - **Gateway diagnostics:** in production, enable diagnostic settings on the
-  gateway (TunnelDiagnosticLog, IKEDiagnosticLog) shipping to Log Analytics —
-  that's how you see Phase 1/Phase 2 failures instead of guessing.
+  gateway (TunnelDiagnosticLog, IKEDiagnosticLog) shipping to Log Analytics.
+  That's how you see Phase 1/Phase 2 failures instead of guessing.
 - **NSG flow logs:** enable on both NSGs to a storage account for forensic
   review of denied traffic.
 - **On-prem side:** the tunnel is only as strong as the device terminating
-  it — keep its firmware patched and its PSK out of chat/email/tickets.
+  it, keep its firmware patched and its PSK out of chat/email/tickets.
 - **LNG hygiene:** keep the Local Network Gateway's address prefixes tight
   (only what on-prem actually owns); over-broad prefixes black-hole traffic
   that should have gone to the internet.

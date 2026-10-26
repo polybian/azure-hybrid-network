@@ -1,5 +1,5 @@
 // ============================================================
-// Azure Hybrid Network — site-to-site VPN design (TEST ONLY)
+// Azure Hybrid Network - site-to-site VPN design (TEST ONLY)
 // ============================================================
 // TEST DESIGN. Nothing here touches a real subscription, a real
 // on-premises network, or a real public IP. All on-prem values
@@ -8,10 +8,10 @@
 @description('Azure region for the deployment. Keep it close to you: eastus for Chicago.')
 param location string = resourceGroup().location
 
-@description('Public IP of the on-premises VPN device. PLACEHOLDER — replace with your real on-prem public IP at deploy time.')
+@description('Public IP of the on-premises VPN device. PLACEHOLDER - replace with your real on-prem public IP at deploy time.')
 param onPremPublicIp string = '203.0.113.10'
 
-@description('On-premises address space reachable through the tunnel. PLACEHOLDER — replace with your real LAN range.')
+@description('On-premises address space reachable through the tunnel. PLACEHOLDER - replace with your real LAN range.')
 param onPremAddressSpace array = [
   '192.168.0.0/16'
 ]
@@ -30,7 +30,7 @@ var lngName = 'lng-onprem'
 var connName = 'conn-onprem'
 
 // ------------------------------------------------------------
-// NSGs — default-deny posture, explicit allow-list on top.
+// NSGs - default-deny posture, explicit allow-list on top.
 // Azure's built-in rules already deny stray inbound traffic at
 // priority 65500, but we add an explicit DenyAllInbound rule so
 // the intent is visible in review and in `az network nsg show`.
@@ -57,7 +57,7 @@ resource nsgApp 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
       {
         name: 'AllowOnPremRdp'
         properties: {
-          description: 'Management: RDP ONLY from on-prem through the tunnel — never from the internet'
+          description: 'Management: RDP ONLY from on-prem through the tunnel - never from the internet'
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '3389'
@@ -94,7 +94,7 @@ resource nsgData 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
       {
         name: 'AllowAppToSql'
         properties: {
-          description: 'Data tier: SQL only from the app subnet — nothing else can reach it'
+          description: 'Data tier: SQL only from the app subnet - nothing else can reach it'
           protocol: 'Tcp'
           sourcePortRange: '*'
           destinationPortRange: '1433'
@@ -129,7 +129,7 @@ resource nsgData 'Microsoft.Network/networkSecurityGroups@2021-05-01' = {
 //    /27 is the recommended minimum, leaves room for active-active)
 //  - snet-app     10.10.1.0/24   (web/app tier, NSG attached)
 //  - snet-data    10.10.2.0/24   (data tier, NSG attached)
-// Note: NSGs must NEVER be attached to GatewaySubnet — Azure
+// Note: NSGs must NEVER be attached to GatewaySubnet - Azure
 // blocks it and the deploy will fail if you try.
 // ------------------------------------------------------------
 resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
@@ -173,7 +173,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-05-01' = {
 // ------------------------------------------------------------
 // VPN Gateway: VpnGw1AZ, route-based, IKEv2, zone-redundant.
 // VpnGw1AZ = the budget sweet spot (~1 Gbps aggregate, up to 30
-// tunnels, BGP capable) — without the VpnGw2+ price jump.
+// tunnels, BGP capable) - without the VpnGw2+ price jump.
 // NOTE: Microsoft stopped allowing creation of non-AZ VpnGw1-5 SKUs;
 // VpnGw1AZ is the current minimum. The gateway public IP is
 // zone-redundant (zones 1,2,3) as the AZ SKU requires.
@@ -226,7 +226,7 @@ resource vpnGateway 'Microsoft.Network/virtualNetworkGateways@2021-05-01' = {
 
 // ------------------------------------------------------------
 // Local Network Gateway: the on-prem side of the tunnel.
-// gatewayIpAddress and addressPrefixes are placeholders —
+// gatewayIpAddress and addressPrefixes are placeholders - 
 // the deploy is meaningless until you set your real values.
 // ------------------------------------------------------------
 resource localNetworkGateway 'Microsoft.Network/localNetworkGateways@2021-05-01' = {
@@ -243,7 +243,7 @@ resource localNetworkGateway 'Microsoft.Network/localNetworkGateways@2021-05-01'
 // ------------------------------------------------------------
 // Site-to-site connection: IPsec/IKEv2 between the Azure VPN
 // Gateway and the on-prem device. The shared key is a secure
-// parameter — it exists only at deploy time, never in the file.
+// parameter - it exists only at deploy time, never in the file.
 // ------------------------------------------------------------
 resource vpnConnection 'Microsoft.Network/connections@2021-05-01' = {
   name: connName
@@ -263,7 +263,7 @@ resource vpnConnection 'Microsoft.Network/connections@2021-05-01' = {
 }
 
 // ------------------------------------------------------------
-// OPTIONAL test VM (COMMENTED OUT — costs money while running).
+// OPTIONAL test VM (COMMENTED OUT - costs money while running).
 // Uncomment to spin up a small box in snet-app for end-to-end
 // tunnel testing (ping/RDP from on-prem through the VPN).
 // Remember: delete it (or the whole resource group) when done.
@@ -297,7 +297,7 @@ resource testVm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
     osProfile: {
       computerName: 'vm-test'
       adminUsername: 'azureuser'
-      // SSH key only — password auth disabled (matches the terraform repo).
+      // SSH key only - password auth disabled (matches the terraform repo).
       linuxConfiguration: {
         disablePasswordAuthentication: true
         ssh: {

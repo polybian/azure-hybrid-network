@@ -1,8 +1,8 @@
-# Azure Hybrid Network — Site-to-Site VPN Design
+# Azure Hybrid Network: Site-to-Site VPN Design
 
 A production-grade hybrid network design: an on-premises network (home infrastructure or branch-office
 router) connected over an IPsec/IKEv2 site-to-site tunnel to an Azure virtual
-network, with a classic three-tier layout — dedicated gateway subnet, an app
+network, with a classic three-tier layout, dedicated gateway subnet, an app
 subnet and a data subnet, each protected by an explicit allow-list NSG. The
 optional test VM stays commented out so the design costs nothing until you
 actually deploy it.
@@ -31,7 +31,7 @@ discipline of secrets handling, cost awareness, and clean teardown.
                         │                3389 from      (SQL 1433 1433 from │
                         │                on-prem only    from app   app only)│
                         │                ──────────     ────────   ────────│
-                        │  (optional test VM — commented out by default)   │
+                        │  (optional test VM - commented out by default)   │
                         └──────────────────────────────────────────────────┘
 ```
 
@@ -40,7 +40,7 @@ discipline of secrets handling, cost awareness, and clean teardown.
 | Path | Purpose |
 |---|---|
 | `bicep/main.bicep` | The whole network as code: VNet + subnets, NSGs, VPN Gateway, Local Network Gateway, IPsec connection (test VM commented out) |
-| `bicep/main.bicepparam` | Parameters file with placeholders (no secrets — the shared key is passed at deploy time) |
+| `bicep/main.bicepparam` | Parameters file with placeholders (no secrets: the shared key is passed at deploy time) |
 | `docs/architecture.md` | Design decisions, "why X over Y", and hardening notes |
 | `docs/deployment-runbook.md` | Step-by-step deploy, tunnel verification, and teardown commands |
 | `docs/cost-notes.md` | SKU price ranges (clearly labeled ESTIMATES) + teardown reminder |
@@ -78,7 +78,7 @@ az network vpn-connection show \
   --name conn-onprem --resource-group rg-hybrid \
   --query "{status:connectionStatus, protocol:connectionProtocol}" -o table
 
-# 6. When you're done — TEARDOWN (the gateway bills by the hour)
+# 6. When you're done - TEARDOWN (the gateway bills by the hour)
 az group delete --name rg-hybrid --yes --no-wait
 ```
 
@@ -88,13 +88,13 @@ az group delete --name rg-hybrid --yes --no-wait
   rule; everything above it is a narrow allow-list (on-prem → app on 443/3389,
   app → data on 1433).
 - **No public management ports:** RDP/SSH are reachable only from the
-  on-premises range *through the tunnel* — never from the internet. There is
+  on-premises range *through the tunnel*, never from the internet. There is
   no public IP on any VM in this design.
 - **Secrets are referenced, not embedded:** the IPsec pre-shared key is a
   `@secure()` Bicep parameter with no default value; in production it lives in
   Azure Key Vault and is passed as a Key Vault reference (see the runbook).
-  No real IPs, subscription IDs, or tenant IDs appear anywhere in this repo —
-  the on-prem values are TEST-NET-3 (`203.0.113.0/24`) placeholders.
+  No real IPs, subscription IDs, or tenant IDs appear anywhere in this repo.
+  The on-prem values are TEST-NET-3 (`203.0.113.0/24`) placeholders.
 
 ## Validation
 
@@ -102,7 +102,7 @@ az group delete --name rg-hybrid --yes --no-wait
   `bicep build bicep/main.bicep` and `bicep build-params
   bicep/main.bicepparam` both succeed; the generated ARM JSON and
   parameters JSON were re-validated with `python3 -m json.tool`. The
-  parameters compile to a Key Vault *reference* for the shared key — no
+  parameters compile to a Key Vault *reference* for the shared key: no
   secret value exists in any file. Two non-blocking `BCP035` warnings
   remain on the `connections` resource: a known type-definition
   inaccuracy for its gateway sub-references (id-only is the standard
@@ -114,4 +114,4 @@ az group delete --name rg-hybrid --yes --no-wait
 - To fully validate on your own subscription: deploy (runbook step 5),
   confirm `connectionStatus == Connected` (step 7), pass traffic from
   on-prem to `10.10.1.x`, and watch the tunnel counters move. Then tear it
-  down — `az group delete --name rg-hybrid`.
+  down: `az group delete --name rg-hybrid`.
